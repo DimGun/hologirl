@@ -3,7 +3,7 @@ using System.IO;
 using UnityEngine;
 using System.Collections.Generic;
 
-public static class SavWav {
+public static class VoiceRecord {
 
 	const int HEADER_SIZE = 44;
 
