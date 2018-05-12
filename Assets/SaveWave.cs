@@ -56,14 +56,8 @@ public class SaveWave : MonoBehaviour {
             }
 
             if (GUILayout.Button("Save")) {
-                for (int i = 1;; i++)
-                    if (System.IO.File.Exists("myfile")) {
-                        VoiceRecord.Save("myfile" + i, this.myAudioClip);
-                    }
-                else {
-                    VoiceRecord.Save("myfile", this.myAudioClip);
-
-                }
+                string fileName = "VoiceRecord_" + GetTimeStampStr();
+                VoiceRecord.Save(fileName, this.myAudioClip);
             }
         }
 
@@ -74,5 +68,9 @@ public class SaveWave : MonoBehaviour {
         }
 
         GUILayout.EndArea();
+    }
+
+    protected string GetTimeStampStr() {
+        return System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss-ffff");
     }
 }
