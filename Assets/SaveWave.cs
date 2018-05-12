@@ -6,10 +6,20 @@ public class SaveWave : MonoBehaviour {
 
     AudioClip myAudioClip;
     string micDevice;
+    string lastError;
 
-    void Start() { }
-    void Update() { }
+    void Start() { 
+        if (Microphone.devices.Length < 1) {
+            lastError = "Can't find a microphone device";
+        } else if  (Microphone.devices.Length == 1) {
+            micDevice = Microphone.devices[0];
+        }
+    }
+
     void OnGUI() {
+        if (lastError != null) {
+            GUILayout.Label("Error: " + lastError);
+        }
         if (micDevice != null) {
             ShowRecordMenu();
         } else {
@@ -18,7 +28,7 @@ public class SaveWave : MonoBehaviour {
     }
 
     protected void ShowSelectMicMenu() {
-        GUILayout.BeginArea(new Rect(0, 0, 200, 200));
+        GUILayout.BeginArea(new Rect(0, 20, 200, 200));
         foreach (string device in Microphone.devices) {
             if (GUILayout.Button("> " + device)) {
                 this.micDevice = device;
@@ -28,7 +38,7 @@ public class SaveWave : MonoBehaviour {
     }
 
     protected void ShowRecordMenu() {
-        GUILayout.BeginArea(new Rect(0, 0, 100, 100));
+        GUILayout.BeginArea(new Rect(0, 20, 100, 100));
 
         bool isRecording = Microphone.IsRecording(micDevice);
 
