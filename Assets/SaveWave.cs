@@ -8,10 +8,10 @@ public class SaveWave : MonoBehaviour {
     string micDevice;
     string lastError;
 
-    void Start() { 
+    void Start() {
         if (Microphone.devices.Length < 1) {
             lastError = "Can't find a microphone device";
-        } else if  (Microphone.devices.Length == 1) {
+        } else if (Microphone.devices.Length == 1) {
             micDevice = Microphone.devices[0];
         }
     }
