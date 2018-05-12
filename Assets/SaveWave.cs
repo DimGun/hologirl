@@ -17,10 +17,10 @@ public class SaveWave : MonoBehaviour {
 
             for (int i = 1;; i++)
                 if (System.IO.File.Exists ("myfile")) {
-                    SavWav.Save ("myfile" + i, myAudioClip);
+                    VoiceRecord.Save ("myfile" + i, myAudioClip);
                 }
             else {
-                SavWav.Save ("myfile", myAudioClip);
+                VoiceRecord.Save ("myfile", myAudioClip);
                 //                      audio.Play();
             }
         }
