@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
- public class audioRec_variable : MonoBehaviour 
+ public class SaveWave : MonoBehaviour 
  {
   
  AudioClip myAudioClip; 
