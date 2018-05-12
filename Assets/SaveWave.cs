@@ -9,12 +9,15 @@ public class SaveWave : MonoBehaviour {
     void Start () { }
     void Update () { }
     void OnGUI () {
-        if (GUI.Button (new Rect (10, 10, 60, 50), "Record")) {
+        GUILayout.BeginArea(new Rect(0, 0, 100, 100));
+
+        if (GUILayout.Button ("Record")) {
             myAudioClip = Microphone.Start (null, false, 10, 44100);
         }
 
         if (GUI.Button (new Rect (10, 70, 60, 50), "Save")) {
 
+        if (GUILayout.Button ("Save")) {
             for (int i = 1;; i++)
                 if (System.IO.File.Exists ("myfile")) {
                     VoiceRecord.Save ("myfile" + i, myAudioClip);
@@ -24,5 +27,7 @@ public class SaveWave : MonoBehaviour {
                 //                      audio.Play();
             }
         }
+
+        GUILayout.EndArea();
     }
 }
