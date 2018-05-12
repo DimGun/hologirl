@@ -5,42 +5,61 @@ using UnityEngine;
 public class SaveWave : MonoBehaviour {
 
     AudioClip myAudioClip;
+    string micDevice;
 
     void Start() { }
     void Update() { }
     void OnGUI() {
+        if (micDevice != null) {
+            ShowRecordMenu();
+        } else {
+            ShowSelectMicMenu();
+        }
+    }
+
+    protected void ShowSelectMicMenu() {
+        GUILayout.BeginArea(new Rect(0, 0, 200, 200));
+        foreach (string device in Microphone.devices) {
+            if (GUILayout.Button("> " + device)) {
+                this.micDevice = device;
+            }
+        }
+        GUILayout.EndArea();
+    }
+
+    protected void ShowRecordMenu() {
         GUILayout.BeginArea(new Rect(0, 0, 100, 100));
 
-        bool isRecording = !Microphone.IsRecording();
+        bool isRecording = Microphone.IsRecording(micDevice);
 
         if (!isRecording) {
             if (GUILayout.Button("Record")) {
-                myAudioClip = Microphone.Start(null, false, 10, 44100);
+                this.myAudioClip = Microphone.Start(null, false, 10, 44100);
+            }
+        }
+
+        if (!isRecording && this.myAudioClip) {
+            if (GUILayout.Button("Play")) {
+                AudioSource audioSource = GetComponent<AudioSource>();
+                audioSource.clip = this.myAudioClip;
+                audioSource.Play();
             }
 
-            if (myAudioClip) {
-                if (GUILayout.Button("Play")) {
-                    AudioSource audioSource = GetComponent<AudioSource>();
-                    audioSource.clip = myAudioClip;
-                    audioSource.Play();
-                }
-
-                if (GUILayout.Button("Save")) {
-                    for (int i = 1;; i++)
-                        if (System.IO.File.Exists("myfile")) {
-                            VoiceRecord.Save("myfile" + i, myAudioClip);
-                        }
-                    else {
-                        VoiceRecord.Save("myfile", myAudioClip);
-
+            if (GUILayout.Button("Save")) {
+                for (int i = 1;; i++)
+                    if (System.IO.File.Exists("myfile")) {
+                        VoiceRecord.Save("myfile" + i, this.myAudioClip);
                     }
+                else {
+                    VoiceRecord.Save("myfile", this.myAudioClip);
+
                 }
             }
         }
 
         if (isRecording) {
             if (GUILayout.Button("Stop Record")) {
-                Microphone.End();
+                Microphone.End(this.micDevice);
             }
         }
 
