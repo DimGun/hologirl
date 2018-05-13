@@ -2,10 +2,18 @@
 using System.IO;
 using UnityEngine;
 using System.Collections.Generic;
+using System.Threading;
 
 public static class VoiceRecord {
 
 	const int HEADER_SIZE = 44;
+	struct ClipData{
+
+		public  int samples;
+		public  int channels;
+		public float[] samplesData;
+
+	}
 
 	public static bool Save(string filename, AudioClip clip) {
 		if (!filename.ToLower().EndsWith(".wav")) {
@@ -18,11 +26,16 @@ public static class VoiceRecord {
 
 		// Make sure directory exists if user is saving to sub dir.
 		Directory.CreateDirectory(Path.GetDirectoryName(filepath));
-
+		ClipData clipdata = new ClipData ();
+		clipdata.samples = clip.samples;
+		clipdata.channels = clip.channels;
+		float[] dataFloat = new float[clip.samples*clip.channels];
+		clip.GetData (dataFloat, 0);
+		clipdata.samplesData = dataFloat;
 		using (var fileStream = CreateEmpty(filepath)) {
-
-			ConvertAndWrite(fileStream, clip);
-
+			MemoryStream memstrm = new MemoryStream();
+			ConvertAndWrite(memstrm, clipdata);
+			memstrm.WriteTo(fileStream);
 			WriteHeader(fileStream, clip);
 		}
 
@@ -79,11 +92,11 @@ public static class VoiceRecord {
 		return fileStream;
 	}
 
-	static void ConvertAndWrite(FileStream fileStream, AudioClip clip) {
+	static void ConvertAndWrite(MemoryStream memStream, ClipData clipData)
+	{
+		float[] samples = new float[clipData.samples*clipData.channels];
 
-		var samples = new float[clip.samples];
-
-		clip.GetData(samples, 0);
+		samples = clipData.samplesData;
 
 		Int16[] intData = new Int16[samples.Length];
 		//converting in 2 float[] steps to Int16[], //then Int16[] to Byte[]
@@ -92,16 +105,15 @@ public static class VoiceRecord {
 		//bytesData array is twice the size of
 		//dataSource array because a float converted in Int16 is 2 bytes.
 
-		int rescaleFactor = 32767; //to convert float to Int16
+		const float rescaleFactor = 32767; //to convert float to Int16
 
-		for (int i = 0; i<samples.Length; i++) {
-			intData[i] = (short) (samples[i] * rescaleFactor);
-			Byte[] byteArr = new Byte[2];
-			byteArr = BitConverter.GetBytes(intData[i]);
-			byteArr.CopyTo(bytesData, i * 2);
+		for (int i = 0; i < samples.Length; i++)
+		{
+			intData[i] = (short)(samples[i] * rescaleFactor);
+			//Debug.Log (samples [i]);
 		}
-
-		fileStream.Write(bytesData, 0, bytesData.Length);
+		Buffer.BlockCopy(intData, 0, bytesData, 0, bytesData.Length);
+		memStream.Write(bytesData, 0, bytesData.Length);
 	}
 
 	static void WriteHeader(FileStream fileStream, AudioClip clip) {
