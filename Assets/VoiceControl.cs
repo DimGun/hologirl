@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class SaveWave : MonoBehaviour {
+public class VoiceControl : MonoBehaviour {
 
     AudioClip myAudioClip;
     string micDevice;
@@ -57,7 +57,7 @@ public class SaveWave : MonoBehaviour {
 
             if (GUILayout.Button("Save")) {
                 string fileName = "VoiceRecord_" + GetTimeStampStr();
-                VoiceRecord.Save(fileName, this.myAudioClip);
+                SavWav.Save(fileName, this.myAudioClip);
             }
         }
 

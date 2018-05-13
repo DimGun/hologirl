@@ -4,7 +4,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using System.Threading;
 
-public static class VoiceRecord {
+public static class SavWav {
 
 	const int HEADER_SIZE = 44;
 	struct ClipData{
