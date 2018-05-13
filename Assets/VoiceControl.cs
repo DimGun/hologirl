@@ -5,10 +5,12 @@ using UnityEngine;
 public class VoiceControl : MonoBehaviour {
 
     AudioClip myAudioClip;
+    AudioSource audioSource;
     string micDevice;
     string lastError;
 
     void Start() {
+        audioSource = GetComponent<AudioSource>();
         if (Microphone.devices.Length < 1) {
             lastError = "Can't find a microphone device";
         } else if (Microphone.devices.Length == 1) {
@@ -41,20 +43,28 @@ public class VoiceControl : MonoBehaviour {
         GUILayout.BeginArea(new Rect(0, 20, 100, 100));
 
         bool isRecording = Microphone.IsRecording(micDevice);
+        bool isPlaying = audioSource.isPlaying;
 
-        if (!isRecording) {
+        if (!isRecording && !isPlaying) {
             if (GUILayout.Button("Record")) {
                 this.myAudioClip = Microphone.Start(null, false, 10, 44100);
             }
         }
 
-        if (!isRecording && this.myAudioClip) {
+        if (isPlaying) {
+            if (GUILayout.Button("Stop")) {
+                audioSource.Stop();
+            }
+        }
+
+        if (!isPlaying && !isRecording && this.myAudioClip) {
             if (GUILayout.Button("Play")) {
-                AudioSource audioSource = GetComponent<AudioSource>();
                 audioSource.clip = this.myAudioClip;
                 audioSource.Play();
             }
+        }
 
+        if (!isRecording && this.myAudioClip) {
             if (GUILayout.Button("Save")) {
                 string fileName = "VoiceRecord_" + GetTimeStampStr() + ".wav";
                 var filePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
