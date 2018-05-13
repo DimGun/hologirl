@@ -6,18 +6,19 @@ using System.Threading;
 
 public static class SavWav {
 
-	const int HEADER_SIZE = 44;
-
 	public static bool SaveToFile(string filepath, AudioClip clip) {
 		Debug.Log("Writting wav file to '" + filepath + "'");
 
 		// Make sure directory exists if user is saving to sub dir.
 		Directory.CreateDirectory(Path.GetDirectoryName(filepath));
-		using (var fileStream = CreateEmpty(filepath)) {
-			Byte[] bytes = GetByteArray(clip);
-			fileStream.Write(bytes, 0, bytes.Length);
-			WriteHeader(fileStream, clip);
-		}
+
+		FileStream fileStream = new FileStream(filepath, FileMode.Create);
+		Byte[] headerBytesArray = GetHeaderBytesArray(clip);
+		fileStream.Write(headerBytesArray, 0, headerBytesArray.Length);
+
+		Byte[] bodyByteArray = GetFileBodyByteArray(clip);
+		fileStream.Write(bodyByteArray, 0, bodyByteArray.Length);
+		fileStream.Close();
 
 		return true; // TODO: return false if there's a failure saving the file
 	}
@@ -60,19 +61,7 @@ public static class SavWav {
 		return clip;
 	}
 
-	static FileStream CreateEmpty(string filepath) {
-		var fileStream = new FileStream(filepath, FileMode.Create);
-	    byte emptyByte = new byte();
-
-	    for(int i = 0; i < HEADER_SIZE; i++) //preparing the header
-	    {
-	        fileStream.WriteByte(emptyByte);
-	    }
-
-		return fileStream;
-	}
-
-	static Byte[] GetByteArray(AudioClip clip)
+	static Byte[] GetFileBodyByteArray(AudioClip clip)
 	{
 		float[] samples = new float[clip.samples * clip.channels];
 		clip.GetData (samples, 0);
@@ -95,57 +84,60 @@ public static class SavWav {
 		return bytesData;
 	}
 
-	static void WriteHeader(FileStream fileStream, AudioClip clip) {
+	static Byte[] GetHeaderBytesArray(AudioClip clip) {
 
-		var hz = clip.frequency;
-		var channels = clip.channels;
-		var samples = clip.samples;
+		const int HEADER_SIZE = 44;
 
-		fileStream.Seek(0, SeekOrigin.Begin);
+		int hz = clip.frequency;
+		int channels = clip.channels;
+		int samples = clip.samples;
+
+		MemoryStream headerMemStream = new MemoryStream();
 
 		Byte[] riff = System.Text.Encoding.UTF8.GetBytes("RIFF");
-		fileStream.Write(riff, 0, 4);
+		headerMemStream.Write(riff, 0, 4);
 
-		Byte[] chunkSize = BitConverter.GetBytes(fileStream.Length - 8);
-		fileStream.Write(chunkSize, 0, 4);
+		var chunkSize = HEADER_SIZE + samples * channels * 2 - 4; // minus RIFF prefix
+		Byte[] chunkSizeArr = BitConverter.GetBytes(chunkSize);
+		headerMemStream.Write(chunkSizeArr, 0, 4);
 
 		Byte[] wave = System.Text.Encoding.UTF8.GetBytes("WAVE");
-		fileStream.Write(wave, 0, 4);
+		headerMemStream.Write(wave, 0, 4);
 
 		Byte[] fmt = System.Text.Encoding.UTF8.GetBytes("fmt ");
-		fileStream.Write(fmt, 0, 4);
+		headerMemStream.Write(fmt, 0, 4);
 
 		Byte[] subChunk1 = BitConverter.GetBytes(16);
-		fileStream.Write(subChunk1, 0, 4);
+		headerMemStream.Write(subChunk1, 0, 4);
 
 		UInt16 two = 2;
 		UInt16 one = 1;
 
 		Byte[] audioFormat = BitConverter.GetBytes(one);
-		fileStream.Write(audioFormat, 0, 2);
+		headerMemStream.Write(audioFormat, 0, 2);
 
 		Byte[] numChannels = BitConverter.GetBytes(channels);
-		fileStream.Write(numChannels, 0, 2);
+		headerMemStream.Write(numChannels, 0, 2);
 
 		Byte[] sampleRate = BitConverter.GetBytes(hz);
-		fileStream.Write(sampleRate, 0, 4);
+		headerMemStream.Write(sampleRate, 0, 4);
 
 		Byte[] byteRate = BitConverter.GetBytes(hz * channels * 2); // sampleRate * bytesPerSample*number of channels, here 44100*2*2
-		fileStream.Write(byteRate, 0, 4);
+		headerMemStream.Write(byteRate, 0, 4);
 
 		UInt16 blockAlign = (ushort) (channels * 2);
-		fileStream.Write(BitConverter.GetBytes(blockAlign), 0, 2);
+		headerMemStream.Write(BitConverter.GetBytes(blockAlign), 0, 2);
 
 		UInt16 bps = 16;
 		Byte[] bitsPerSample = BitConverter.GetBytes(bps);
-		fileStream.Write(bitsPerSample, 0, 2);
+		headerMemStream.Write(bitsPerSample, 0, 2);
 
 		Byte[] datastring = System.Text.Encoding.UTF8.GetBytes("data");
-		fileStream.Write(datastring, 0, 4);
+		headerMemStream.Write(datastring, 0, 4);
 
 		Byte[] subChunk2 = BitConverter.GetBytes(samples * channels * 2);
-		fileStream.Write(subChunk2, 0, 4);
+		headerMemStream.Write(subChunk2, 0, 4);
 
-//		fileStream.Close();
+		return headerMemStream.ToArray();
 	}
 }
