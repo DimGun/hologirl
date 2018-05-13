@@ -8,13 +8,8 @@ public static class SavWav {
 
 	const int HEADER_SIZE = 44;
 
-	public static bool Save(string filename, AudioClip clip) {
-		if (!filename.ToLower().EndsWith(".wav")) {
-			filename += ".wav";
-		}
-
-		var filepath = Path.Combine(Application.persistentDataPath, filename);
-		Debug.Log(filepath);
+	public static bool SaveToFile(string filepath, AudioClip clip) {
+		Debug.Log("Writting wav file to '" + filepath + "'");
 
 		// Make sure directory exists if user is saving to sub dir.
 		Directory.CreateDirectory(Path.GetDirectoryName(filepath));

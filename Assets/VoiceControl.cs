@@ -56,8 +56,9 @@ public class VoiceControl : MonoBehaviour {
             }
 
             if (GUILayout.Button("Save")) {
-                string fileName = "VoiceRecord_" + GetTimeStampStr();
-                SavWav.Save(fileName, this.myAudioClip);
+                string fileName = "VoiceRecord_" + GetTimeStampStr() + ".wav";
+                var filePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
+                SavWav.SaveToFile(filePath, this.myAudioClip);
             }
         }
 
