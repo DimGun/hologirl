@@ -7,13 +7,6 @@ using System.Threading;
 public static class SavWav {
 
 	const int HEADER_SIZE = 44;
-	struct ClipData{
-
-		public  int samples;
-		public  int channels;
-		public float[] samplesData;
-
-	}
 
 	public static bool Save(string filename, AudioClip clip) {
 		if (!filename.ToLower().EndsWith(".wav")) {
@@ -21,21 +14,13 @@ public static class SavWav {
 		}
 
 		var filepath = Path.Combine(Application.persistentDataPath, filename);
-
 		Debug.Log(filepath);
 
 		// Make sure directory exists if user is saving to sub dir.
 		Directory.CreateDirectory(Path.GetDirectoryName(filepath));
-		ClipData clipdata = new ClipData ();
-		clipdata.samples = clip.samples;
-		clipdata.channels = clip.channels;
-		float[] dataFloat = new float[clip.samples*clip.channels];
-		clip.GetData (dataFloat, 0);
-		clipdata.samplesData = dataFloat;
 		using (var fileStream = CreateEmpty(filepath)) {
-			MemoryStream memstrm = new MemoryStream();
-			ConvertAndWrite(memstrm, clipdata);
-			memstrm.WriteTo(fileStream);
+			Byte[] bytes = GetByteArray(clip);
+			fileStream.Write(bytes, 0, bytes.Length);
 			WriteHeader(fileStream, clip);
 		}
 
@@ -92,11 +77,10 @@ public static class SavWav {
 		return fileStream;
 	}
 
-	static void ConvertAndWrite(MemoryStream memStream, ClipData clipData)
+	static Byte[] GetByteArray(AudioClip clip)
 	{
-		float[] samples = new float[clipData.samples*clipData.channels];
-
-		samples = clipData.samplesData;
+		float[] samples = new float[clip.samples * clip.channels];
+		clip.GetData (samples, 0);
 
 		Int16[] intData = new Int16[samples.Length];
 		//converting in 2 float[] steps to Int16[], //then Int16[] to Byte[]
@@ -113,7 +97,7 @@ public static class SavWav {
 			//Debug.Log (samples [i]);
 		}
 		Buffer.BlockCopy(intData, 0, bytesData, 0, bytesData.Length);
-		memStream.Write(bytesData, 0, bytesData.Length);
+		return bytesData;
 	}
 
 	static void WriteHeader(FileStream fileStream, AudioClip clip) {
