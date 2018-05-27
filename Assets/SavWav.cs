@@ -1,8 +1,8 @@
 ﻿using System;
-using System.IO;
-using UnityEngine;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
+using UnityEngine;
 
 public static class SavWav {
 
@@ -24,7 +24,7 @@ public static class SavWav {
 	}
 
 	public static AudioClip CreateClipByTrimmingSilence(AudioClip clip, float min) {
-		if(clip.samples < 1) {
+		if (clip.samples < 1) {
 			return null;
 		}
 
@@ -71,10 +71,9 @@ public static class SavWav {
 		return result;
 	}
 
-	static Byte[] GetFileBodyByteArray(AudioClip clip)
-	{
+	static Byte[] GetFileBodyByteArray(AudioClip clip) {
 		float[] samples = new float[clip.samples * clip.channels];
-		clip.GetData (samples, 0);
+		clip.GetData(samples, 0);
 
 		Int16[] intData = new Int16[samples.Length];
 		//converting in 2 float[] steps to Int16[], //then Int16[] to Byte[]
@@ -85,9 +84,8 @@ public static class SavWav {
 
 		const float rescaleFactor = 32767; //to convert float to Int16
 
-		for (int i = 0; i < samples.Length; i++)
-		{
-			intData[i] = (short)(samples[i] * rescaleFactor);
+		for (int i = 0; i < samples.Length; i++) {
+			intData[i] = (short) (samples[i] * rescaleFactor);
 			//Debug.Log (samples [i]);
 		}
 		Buffer.BlockCopy(intData, 0, bytesData, 0, bytesData.Length);
