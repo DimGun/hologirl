@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using UnityEngine;
+using UnityEngine.Networking;
 
 public class VoiceControl : MonoBehaviour {
 
@@ -51,6 +53,13 @@ public class VoiceControl : MonoBehaviour {
             }
         }
 
+        if (isRecording) {
+            if (GUILayout.Button("Stop Record")) {
+                Microphone.End(this.micDevice);
+                this.myAudioClip = SavWav.CreateClipByTrimmingSilence(this.myAudioClip, 0.0f);
+            }
+        }
+
         if (isPlaying) {
             if (GUILayout.Button("Stop")) {
                 audioSource.Stop();
@@ -72,14 +81,33 @@ public class VoiceControl : MonoBehaviour {
             }
         }
 
-        if (isRecording) {
-            if (GUILayout.Button("Stop Record")) {
-                Microphone.End(this.micDevice);
-                this.myAudioClip = SavWav.CreateClipByTrimmingSilence(this.myAudioClip, 0.0f);
+        //if (!isRecording && this.myAudioClip) {
+            if (GUILayout.Button("Send")) {
+                string filePath = "/Users/dimgun/Library/Application Support/HoloGirls/HoloGirl/VoiceRecord_2018-05-27-11-17-27-8878.wav";
+                StartCoroutine(SendRequest(filePath));
             }
-        }
+        //}
 
         GUILayout.EndArea();
+    }
+
+    protected IEnumerator SendRequest(string filePath) {
+        //const string uploadUrl = "http://studsib.ru:9999/receive";
+        const string uploadUrl = "http://httpbin.org/anything";
+        byte[] fileData = File.ReadAllBytes(filePath);
+
+        List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
+        formData.Add(new MultipartFormFileSection(fileData));
+
+        UnityWebRequest req = UnityWebRequest.Post(uploadUrl, formData);
+        yield return req.SendWebRequest();
+
+        if (req.isNetworkError || req.isHttpError) {
+            Debug.Log("Failed to upload: " + req.error);
+        } else {
+            Debug.Log("Upload complete. Received in return (bytes): " + req.downloadedBytes);
+            Debug.Log("Raw data" + req.downloadHandler.text);
+        }
     }
 
     protected string GetTimeStampStr() {
