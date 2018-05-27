@@ -75,6 +75,7 @@ public class VoiceControl : MonoBehaviour {
         if (isRecording) {
             if (GUILayout.Button("Stop Record")) {
                 Microphone.End(this.micDevice);
+                this.myAudioClip = SavWav.CreateClipByTrimmingSilence(this.myAudioClip, 0.0f);
             }
         }
 
