@@ -28,7 +28,7 @@ public static class SavWav {
 			return null;
 		}
 
-		var samples = new float[clip.samples];
+		var samples = new float[clip.samples * clip.channels];
 		clip.GetData(samples, 0);
 
 		var samplesTrimmed = TrimSilence(new List<float>(samples), min);
