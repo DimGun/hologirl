@@ -13,11 +13,9 @@ public static class SavWav {
 		Directory.CreateDirectory(Path.GetDirectoryName(filepath));
 
 		FileStream fileStream = new FileStream(filepath, FileMode.Create);
-		Byte[] headerBytesArray = GetHeaderBytesArray(clip);
-		fileStream.Write(headerBytesArray, 0, headerBytesArray.Length);
+		Byte[] byteArray = EncodeToByteArray(clip);
+		fileStream.Write(byteArray, 0, byteArray.Length);
 
-		Byte[] bodyByteArray = GetFileBodyByteArray(clip);
-		fileStream.Write(bodyByteArray, 0, bodyByteArray.Length);
 		fileStream.Close();
 
 		return true; // TODO: return false if there's a failure saving the file
@@ -71,16 +69,18 @@ public static class SavWav {
 		return result;
 	}
 
-	static Byte[] GetFileBodyByteArray(AudioClip clip) {
+	static Byte[] EncodeToByteArray(AudioClip clip) {
+		Byte[] headerData = GetHeaderBytesArray(clip);
+
 		float[] samples = new float[clip.samples * clip.channels];
 		clip.GetData(samples, 0);
 
-		Int16[] intData = new Int16[samples.Length];
-		//converting in 2 float[] steps to Int16[], //then Int16[] to Byte[]
-
-		Byte[] bytesData = new Byte[samples.Length * 2];
+		Byte[] bytesData = new Byte[headerData.Length + samples.Length * 2];
 		//bytesData array is twice the size of
 		//dataSource array because a float converted in Int16 is 2 bytes.
+
+		Int16[] intData = new Int16[samples.Length];
+		//converting in 2 float[] steps to Int16[], //then Int16[] to Byte[]
 
 		const float rescaleFactor = 32767; //to convert float to Int16
 
@@ -88,7 +88,9 @@ public static class SavWav {
 			intData[i] = (short) (samples[i] * rescaleFactor);
 			//Debug.Log (samples [i]);
 		}
-		Buffer.BlockCopy(intData, 0, bytesData, 0, bytesData.Length);
+
+		Buffer.BlockCopy(headerData, 0, bytesData, 0, headerData.Length);
+		Buffer.BlockCopy(intData, 0, bytesData, headerData.Length, intData.Length * 2);
 		return bytesData;
 	}
 
