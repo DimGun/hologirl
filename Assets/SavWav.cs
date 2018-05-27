@@ -23,42 +23,52 @@ public static class SavWav {
 		return true; // TODO: return false if there's a failure saving the file
 	}
 
-	public static AudioClip TrimSilence(AudioClip clip, float min) {
-		var samples = new float[clip.samples];
+	public static AudioClip CreateClipByTrimmingSilence(AudioClip clip, float min) {
+		if(clip.samples < 1) {
+			return null;
+		}
 
+		var samples = new float[clip.samples * clip.channels];
 		clip.GetData(samples, 0);
 
-		return TrimSilence(new List<float>(samples), min, clip.channels, clip.frequency);
+		var samplesTrimmed = TrimSilenceSafe(samples, min);
+		var trimmedClip = AudioClip.Create("TempClip", samplesTrimmed.Length, clip.channels, clip.frequency, false);
+		trimmedClip.SetData(samplesTrimmed, 0);
+		return trimmedClip;
 	}
 
-	public static AudioClip TrimSilence(List<float> samples, float min, int channels, int hz) {
-		return TrimSilence(samples, min, channels, hz, false, false);
+	// Does the same as TrimSilence, but never returns null.
+	public static float[] TrimSilenceSafe(float[] samples, float min) {
+		float[] trimmedSamples = TrimSilence(samples, min);
+		if (trimmedSamples != null && trimmedSamples.Length > 0) {
+			return trimmedSamples;
+		}
+
+		return new float[1];
 	}
 
-	public static AudioClip TrimSilence(List<float> samples, float min, int channels, int hz, bool _3D, bool stream) {
-		int i;
-
-		for (i=0; i<samples.Count; i++) {
-			if (Mathf.Abs(samples[i]) > min) {
-				break;
-			}
+	// Trims silence from both sides.
+	public static float[] TrimSilence(float[] samples, float min) {
+		float[] emptySamples = null;
+		if (samples.Length < 1) {
+			return emptySamples;
 		}
 
-		samples.RemoveRange(0, i);
+		// TODO: If there are several channels, then we need to compare
+		// them separately.
+		Predicate<float> testIsLoud = (f) => { return (Mathf.Abs(f) > min); };
+		int trimFrom = Array.FindIndex(samples, testIsLoud);
+		int trimTo = Array.FindLastIndex(samples, testIsLoud);
 
-		for (i=samples.Count - 1; i>0; i--) {
-			if (Mathf.Abs(samples[i]) > min) {
-				break;
-			}
+		if (trimFrom == -1) { //All samples are silent (lower than `min`)
+			return emptySamples;
 		}
 
-		samples.RemoveRange(i, samples.Count - i);
+		int trimmedLength = trimTo - trimFrom + 1;
+		float[] result = new float[trimmedLength];
+		Array.Copy(samples, trimFrom, result, 0, trimmedLength);
 
-		var clip = AudioClip.Create("TempClip", samples.Count, channels, hz, _3D, stream);
-
-		clip.SetData(samples.ToArray(), 0);
-
-		return clip;
+		return result;
 	}
 
 	static Byte[] GetFileBodyByteArray(AudioClip clip)
