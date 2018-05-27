@@ -31,39 +31,44 @@ public static class SavWav {
 		var samples = new float[clip.samples * clip.channels];
 		clip.GetData(samples, 0);
 
-		var samplesTrimmed = TrimSilence(new List<float>(samples), min);
-
-		if (samplesTrimmed != null && samplesTrimmed.Count > 0) {
-			var trimmedClip = AudioClip.Create("TempClip", samplesTrimmed.Count, clip.channels, clip.frequency, false);
-			trimmedClip.SetData(samplesTrimmed.ToArray(), 0);
-			return trimmedClip;
-		}
-
-		return null;
+		var samplesTrimmed = TrimSilenceSafe(samples, min);
+		var trimmedClip = AudioClip.Create("TempClip", samplesTrimmed.Length, clip.channels, clip.frequency, false);
+		trimmedClip.SetData(samplesTrimmed, 0);
+		return trimmedClip;
 	}
 
-	public static List<float> TrimSilence(List<float> samples, float min) {
-		if (samples.Count < 1) {
-			return null;
+	// Does the same as TrimSilence, but never returns null.
+	public static float[] TrimSilenceSafe(float[] samples, float min) {
+		float[] trimmedSamples = TrimSilence(samples, min);
+		if (trimmedSamples != null && trimmedSamples.Length > 0) {
+			return trimmedSamples;
 		}
 
-		int i;
-		for (i=0; i<samples.Count; i++) {
-			if (Mathf.Abs(samples[i]) > min) {
-				break;
-			}
+		return new float[1];
+	}
+
+	// Trims silence from both sides.
+	public static float[] TrimSilence(float[] samples, float min) {
+		float[] emptySamples = null;
+		if (samples.Length < 1) {
+			return emptySamples;
 		}
 
-		samples.RemoveRange(0, i);
+		// TODO: If there are several channels, then we need to compare
+		// them separately.
+		Predicate<float> testIsLoud = (f) => { return (Mathf.Abs(f) > min); };
+		int trimFrom = Array.FindIndex(samples, testIsLoud);
+		int trimTo = Array.FindLastIndex(samples, testIsLoud);
 
-		for (i=samples.Count - 1; i>0; i--) {
-			if (Mathf.Abs(samples[i]) > min) {
-				break;
-			}
+		if (trimFrom == -1) { //All samples are silent (lower than `min`)
+			return emptySamples;
 		}
-		samples.RemoveRange(i, samples.Count - i);
 
-		return samples;
+		int trimmedLength = trimTo - trimFrom + 1;
+		float[] result = new float[trimmedLength];
+		Array.Copy(samples, trimFrom, result, 0, trimmedLength);
+
+		return result;
 	}
 
 	static Byte[] GetFileBodyByteArray(AudioClip clip)
