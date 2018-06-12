@@ -92,14 +92,11 @@ public class VoiceControl : MonoBehaviour {
     }
 
     protected IEnumerator SendRequest(string filePath) {
-        //const string uploadUrl = "http://studsib.ru:9999/receive";
-        const string uploadUrl = "http://httpbin.org/anything";
-        byte[] fileData = File.ReadAllBytes(filePath);
+        //const string uploadUrl = "https://api.ht.studsib.ru/voice-request";
+        const string uploadUrl = "http://localhost:8080/voice-request";
 
-        List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
-        formData.Add(new MultipartFormFileSection(fileData));
-
-        UnityWebRequest req = UnityWebRequest.Post(uploadUrl, formData);
+        UnityWebRequest req = new UnityWebRequest(uploadUrl, UnityWebRequest.kHttpVerbPOST);
+        req.uploadHandler = new UploadHandlerFile(filePath);
         yield return req.SendWebRequest();
 
         if (req.isNetworkError || req.isHttpError) {
