@@ -105,33 +105,7 @@ public class VoiceControl : MonoBehaviour {
             contentType: "audio/wav"
         ));
 
-        // Construct a payload manually, to workaround UnityWebRequest issue with missed last boundary
-        byte[] boundary = UnityWebRequest.GenerateBoundary();
-        string boundaryStr = System.Text.Encoding.UTF8.GetString(boundary);
-        // missed boundary consists of CRLF--{boundary}--
-        byte[] lastBoundary = System.Text.Encoding.UTF8.GetBytes(System.String.Concat("\r\n--", boundaryStr, "--"));
-
-        // Get raw form data
-        byte[] formDataRaw = UnityWebRequest.SerializeFormSections(formData, boundary);
-
-        //Append last boundary
-        byte[] body = new byte[formDataRaw.Length + lastBoundary.Length];
-        System.Buffer.BlockCopy(formDataRaw, 0, body, 0, formDataRaw.Length);
-        System.Buffer.BlockCopy(lastBoundary, 0, body, formDataRaw.Length, lastBoundary.Length);
-
-        // Add boundary to the content type, server won't detect parts otherwise
-        string contentType = System.String.Concat("multipart/form-data; boundary=", boundaryStr);
-
-        //Make a raw upload handler and set correct content type
-        UploadHandler uploadHandler = new UploadHandlerRaw(body);
-        uploadHandler.contentType = contentType;
-
-        //Attach to web request
-        UnityWebRequest req = new UnityWebRequest(uploadUrl);
-        req.uploadHandler = uploadHandler;
-        req.downloadHandler = new DownloadHandlerBuffer();
-        req.method = UnityWebRequest.kHttpVerbPOST;
-
+        UnityWebRequest req = VoiceControl.MakeMultipartFormDataWebRequest(uploadUrl, UnityWebRequest.kHttpVerbPOST, formData);
         req.chunkedTransfer = false;
         req.useHttpContinue = false;
 
@@ -143,6 +117,38 @@ public class VoiceControl : MonoBehaviour {
             Debug.Log("Upload complete. Received in return (bytes): " + req.downloadedBytes);
             Debug.Log("Raw data" + req.downloadHandler.text);
         }
+    }
+
+    // Constructs a multipart form web request with correct last boundary
+    // Inspired by michaelneil's comment at https://answers.unity.com/questions/1354080/unitywebrequestpost-and-multipartform-data-not-for.html
+    protected static UnityWebRequest MakeMultipartFormDataWebRequest(string url, string method, List<IMultipartFormSection> sections) {
+        byte[] boundary = UnityWebRequest.GenerateBoundary();
+        string boundaryStr = System.Text.Encoding.UTF8.GetString(boundary);
+        // missed boundary consists of CRLF--{boundary}--
+        byte[] lastBoundary = System.Text.Encoding.UTF8.GetBytes("\r\n--" + boundaryStr + "--");
+
+        // Get raw form data
+        byte[] sectionsDataRaw = UnityWebRequest.SerializeFormSections(sections, boundary);
+
+        //Append last boundary
+        byte[] body = new byte[sectionsDataRaw.Length + lastBoundary.Length];
+        System.Buffer.BlockCopy(sectionsDataRaw, 0, body, 0, sectionsDataRaw.Length);
+        System.Buffer.BlockCopy(lastBoundary, 0, body, sectionsDataRaw.Length, lastBoundary.Length);
+
+        // Add boundary to the content type, server won't detect parts otherwise
+        string contentType = "multipart/form-data; boundary=" + boundaryStr;
+
+        //Make a raw upload handler and set correct content type
+        UploadHandler uploadHandler = new UploadHandlerRaw(body);
+        uploadHandler.contentType = contentType;
+
+        //Create a web request
+        UnityWebRequest req = new UnityWebRequest(url);
+        req.uploadHandler = uploadHandler;
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.method = method;
+
+        return req;
     }
 
     private static void DumpFormData(List<IMultipartFormSection> formData) {
