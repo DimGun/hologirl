@@ -75,7 +75,7 @@ public class VoiceControl : MonoBehaviour {
 
         if (!isRecording && this.myAudioClip) {
             if (GUILayout.Button("Save")) {
-                string fileName = "VoiceRecord_" + GetTimeStampStr() + ".wav";
+                string fileName = "VoiceRecord_" + VoiceControl.GetTimeStampStr() + ".wav";
                 var filePath = System.IO.Path.Combine(Application.persistentDataPath, fileName);
                 SavWav.SaveToFile(filePath, this.myAudioClip);
             }
@@ -105,6 +105,8 @@ public class VoiceControl : MonoBehaviour {
             contentType: "audio/wav"
         ));
 
+        //VoiceControl.DumpFormData(formData);
+
         UnityWebRequest req = UnityWebRequest.Post(uploadUrl, formData);
 
         yield return req.SendWebRequest();
@@ -117,7 +119,20 @@ public class VoiceControl : MonoBehaviour {
         }
     }
 
-    protected string GetTimeStampStr() {
+    private static void DumpFormData(List<IMultipartFormSection> formData) {
+        byte[] mulitypartRawData = UnityWebRequest.SerializeFormSections(
+            formData,
+            UnityWebRequest.GenerateBoundary()
+        );
+
+        string dumpFileName = "MultipartFormDataDump_" + VoiceControl.GetTimeStampStr() + ".txt";
+        string filePath = System.IO.Path.Combine(Application.persistentDataPath, dumpFileName);
+        FileStream fileStream = new FileStream(filePath, FileMode.Create);
+	    fileStream.Write(mulitypartRawData, 0, mulitypartRawData.Length);
+	    fileStream.Close();
+    }
+
+    protected static string GetTimeStampStr() {
         return System.DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss-ffff");
     }
 }
