@@ -112,7 +112,7 @@ public class VoiceControl : MonoBehaviour {
         yield return req.SendWebRequest();
 
         if (req.isNetworkError || req.isHttpError) {
-            Debug.Log("Failed to upload: " + req.error);
+            Debug.Log("Failed to upload (code " + req.responseCode + "): " + req.error);
         } else {
             Debug.Log("Upload complete. Received in return (bytes): " + req.downloadedBytes);
             Debug.Log("Raw data" + req.downloadHandler.text);
