@@ -108,6 +108,8 @@ public class VoiceControl : MonoBehaviour {
         //VoiceControl.DumpFormData(formData);
 
         UnityWebRequest req = UnityWebRequest.Post(uploadUrl, formData);
+        req.chunkedTransfer = false;
+        req.useHttpContinue = false;
 
         yield return req.SendWebRequest();
 
