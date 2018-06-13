@@ -8,3 +8,5 @@ services:
       - "8443:8443"
     volumes:
       - ./stubs:/home/wiremock
+    command: -verbose
+    #command: -verbose --print-all-network-traffic
