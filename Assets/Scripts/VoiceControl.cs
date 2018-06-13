@@ -105,9 +105,33 @@ public class VoiceControl : MonoBehaviour {
             contentType: "audio/wav"
         ));
 
-        //VoiceControl.DumpFormData(formData);
+        // Construct a payload manually, to workaround UnityWebRequest issue with missed last boundary
+        byte[] boundary = UnityWebRequest.GenerateBoundary();
+        string boundaryStr = System.Text.Encoding.UTF8.GetString(boundary);
+        // missed boundary consists of CRLF--{boundary}--
+        byte[] lastBoundary = System.Text.Encoding.UTF8.GetBytes(System.String.Concat("\r\n--", boundaryStr, "--"));
 
-        UnityWebRequest req = UnityWebRequest.Post(uploadUrl, formData);
+        // Get raw form data
+        byte[] formDataRaw = UnityWebRequest.SerializeFormSections(formData, boundary);
+
+        //Append last boundary
+        byte[] body = new byte[formDataRaw.Length + lastBoundary.Length];
+        System.Buffer.BlockCopy(formDataRaw, 0, body, 0, formDataRaw.Length);
+        System.Buffer.BlockCopy(lastBoundary, 0, body, formDataRaw.Length, lastBoundary.Length);
+
+        // Add boundary to the content type, server won't detect parts otherwise
+        string contentType = System.String.Concat("multipart/form-data; boundary=", boundaryStr);
+
+        //Make a raw upload handler and set correct content type
+        UploadHandler uploadHandler = new UploadHandlerRaw(body);
+        uploadHandler.contentType = contentType;
+
+        //Attach to web request
+        UnityWebRequest req = new UnityWebRequest(uploadUrl);
+        req.uploadHandler = uploadHandler;
+        req.downloadHandler = new DownloadHandlerBuffer();
+        req.method = UnityWebRequest.kHttpVerbPOST;
+
         req.chunkedTransfer = false;
         req.useHttpContinue = false;
 
