@@ -1,0 +1,22 @@
+{
+  "request": {
+    "url": "/fakeid001/metadata",
+    "method": "GET"
+  },
+
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "data": {
+          "text": "Привет. Как тебя зовут?",
+          "answer": "Привет, меня зовут Алиса. Приятно познакомиться!",
+          "voice_ready": true
+      }
+    },
+
+    "headers": {
+      "Server": "nginx/1.10.3 (Ubuntu)",
+      "Content-Type": "application/json"
+    }
+  }
+}
