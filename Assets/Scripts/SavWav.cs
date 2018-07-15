@@ -21,6 +21,32 @@ public static class SavWav {
 		return true; // TODO: return false if there's a failure saving the file
 	}
 
+	// Encodes audioclip as WAV file and returns it's contents
+	public static Byte[] EncodeToByteArray(AudioClip clip) {
+		Byte[] headerData = GetHeaderBytesArray(clip);
+
+		float[] samples = new float[clip.samples * clip.channels];
+		clip.GetData(samples, 0);
+
+		Byte[] bytesData = new Byte[headerData.Length + samples.Length * 2];
+		//bytesData array is twice the size of
+		//dataSource array because a float converted in Int16 is 2 bytes.
+
+		Int16[] intData = new Int16[samples.Length];
+		//converting in 2 float[] steps to Int16[], //then Int16[] to Byte[]
+
+		const float rescaleFactor = 32767; //to convert float to Int16
+
+		for (int i = 0; i < samples.Length; i++) {
+			intData[i] = (short) (samples[i] * rescaleFactor);
+			//Debug.Log (samples [i]);
+		}
+
+		Buffer.BlockCopy(headerData, 0, bytesData, 0, headerData.Length);
+		Buffer.BlockCopy(intData, 0, bytesData, headerData.Length, intData.Length * 2);
+		return bytesData;
+	}
+
 	public static AudioClip CreateClipByTrimmingSilence(AudioClip clip, float min) {
 		if (clip.samples < 1) {
 			return null;
@@ -67,31 +93,6 @@ public static class SavWav {
 		Array.Copy(samples, trimFrom, result, 0, trimmedLength);
 
 		return result;
-	}
-
-	static Byte[] EncodeToByteArray(AudioClip clip) {
-		Byte[] headerData = GetHeaderBytesArray(clip);
-
-		float[] samples = new float[clip.samples * clip.channels];
-		clip.GetData(samples, 0);
-
-		Byte[] bytesData = new Byte[headerData.Length + samples.Length * 2];
-		//bytesData array is twice the size of
-		//dataSource array because a float converted in Int16 is 2 bytes.
-
-		Int16[] intData = new Int16[samples.Length];
-		//converting in 2 float[] steps to Int16[], //then Int16[] to Byte[]
-
-		const float rescaleFactor = 32767; //to convert float to Int16
-
-		for (int i = 0; i < samples.Length; i++) {
-			intData[i] = (short) (samples[i] * rescaleFactor);
-			//Debug.Log (samples [i]);
-		}
-
-		Buffer.BlockCopy(headerData, 0, bytesData, 0, headerData.Length);
-		Buffer.BlockCopy(intData, 0, bytesData, headerData.Length, intData.Length * 2);
-		return bytesData;
 	}
 
 	static Byte[] GetHeaderBytesArray(AudioClip clip) {
