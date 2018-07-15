@@ -81,13 +81,18 @@ public class VoiceControl : MonoBehaviour {
             }
         }
 
-        //if (!isRecording && this.myAudioClip) {
-            if (GUILayout.Button("Send 'What's your name' \n(not for Anroid)")) {
-                string filePath = Application.streamingAssetsPath + "/test-whats-your-name.wav";
-                byte[] fileData = File.ReadAllBytes(filePath);
-                StartCoroutine(SendVoiceRequest(fileData));
+        if (!isRecording && this.myAudioClip) {
+            if (GUILayout.Button("Send")) {
+                byte[] myAudioClipData = SavWav.EncodeToByteArray(myAudioClip);
+                StartCoroutine(SendVoiceRequest(myAudioClipData));
             }
-        //}
+        }
+
+        if (GUILayout.Button("Test request (not for Android)")) {
+            string filePath = Application.streamingAssetsPath + "/test-whats-your-name.wav";
+            byte[] fileData = File.ReadAllBytes(filePath);
+            StartCoroutine(SendVoiceRequest(fileData));
+        }
 
         GUILayout.EndArea();
     }
