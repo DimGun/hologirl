@@ -42,7 +42,7 @@ public class VoiceControl : MonoBehaviour {
     }
 
     protected void ShowRecordMenu() {
-        GUILayout.BeginArea(new Rect(0, 20, 400, 100));
+        GUILayout.BeginArea(new Rect(20, 20, Screen.width - 20, Screen.height - 20));
 
         bool isRecording = Microphone.IsRecording(micDevice);
         bool isPlaying = audioSource.isPlaying;
