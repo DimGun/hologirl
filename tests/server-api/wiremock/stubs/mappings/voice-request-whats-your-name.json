@@ -1,0 +1,21 @@
+{
+  "request": {
+    "url": "/voice-request",
+    "method": "POST"
+  },
+
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "data": {
+        "metadata": "/response/fakeid001/metadata",
+        "voice": "/response/fakeid001/voice"
+      }
+    },
+
+    "headers": {
+      "Server": "nginx/1.10.3 (Ubuntu)",
+      "Content-Type": "application/json"
+    }
+  }
+}
