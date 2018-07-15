@@ -42,7 +42,7 @@ public class VoiceControl : MonoBehaviour {
     }
 
     protected void ShowRecordMenu() {
-        GUILayout.BeginArea(new Rect(0, 20, 100, 100));
+        GUILayout.BeginArea(new Rect(0, 20, 400, 100));
 
         bool isRecording = Microphone.IsRecording(micDevice);
         bool isPlaying = audioSource.isPlaying;
@@ -82,8 +82,8 @@ public class VoiceControl : MonoBehaviour {
         }
 
         //if (!isRecording && this.myAudioClip) {
-            if (GUILayout.Button("Send")) {
-                string filePath = "/Users/dimgun/Library/Application Support/HoloGirls/HoloGirl/VoiceRecord_2018-05-27-11-17-27-8878.wav";
+            if (GUILayout.Button("Send 'What's your name' \n(not for Anroid)")) {
+                string filePath = Application.streamingAssetsPath + "/test-whats-your-name.wav";
                 byte[] fileData = File.ReadAllBytes(filePath);
                 StartCoroutine(SendVoiceRequest(fileData));
             }
