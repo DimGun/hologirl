@@ -91,3 +91,7 @@ echo "--------------------------"
 echo -n "Playing response..."
 afplay 03-voice-response.wav
 echo "OK"
+
+rm 01-voice-request-response.json
+rm 02-metadata-response.json
+rm 03-voice-response.wav
