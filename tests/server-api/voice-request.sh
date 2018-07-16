@@ -44,7 +44,10 @@ echo "--------------------------"
 
 
 metadata_url=`jq ".data.metadata" 01-voice-request-response.json | tr -d '"'`
-#TODO fail if no metadata
+if [ -z $metadata_url ]; then
+  echo "Failed to get metadata url" 1>&2
+  exit 1
+fi
 metadata_url="$HOST$metadata_url"
 
 attempt=1
