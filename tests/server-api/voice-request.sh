@@ -1,16 +1,42 @@
 set -e
 
-HOST=https://ht.studsib.ru
 MAX_ATTEMPTS=3
 
-voice_request_url=$HOST/voice-request
-echo  "01. Sending request to $voice_request_url"
-curl \
-  -X POST $voice_request_url \
-  -o 01-voice-request-response.json \
-  -H 'Content-Type: multipart/form-data' \
-  -F voice=@./test-whats-your-name.wav \
-  --silent
+if [ $# != 2 ]; then
+  echo "Usage:"
+  echo "`basename $0` (host_url) ("phrase" | wav-file path)"
+  exit 1
+fi
+
+HOST=$1
+echo $2
+if [ "${2##*.}" == "wav" ]; then
+  FILENAME=$2
+else
+  PHRASE=$2
+fi
+
+echo "Host name: '$HOST' Filename: '$FILENAME' Phrase: '$PHRASE'"
+
+if [ -z "$PHRASE" ]; then
+  request_url=$HOST/voice-request
+  echo  "01. Sending request to $request_url"
+  curl \
+    -X POST $request_url \
+    -o 01-voice-request-response.json \
+    -H 'Content-Type: multipart/form-data' \
+    -F voice=@$FILENAME \
+    --silent --show-error
+else
+  request_url=$HOST/text-request
+  echo  "01. Sending request to $request_url"
+  curl \
+    -X POST $request_url \
+    -o 01-voice-request-response.json \
+    -H 'Content-Type: multipart/form-data' \
+    -F text="$PHRASE" \
+    --silent --show-error
+fi
 
 echo 'Repsonse:'
 jq "." 01-voice-request-response.json
@@ -18,6 +44,7 @@ echo "--------------------------"
 
 
 metadata_url=`jq ".data.metadata" 01-voice-request-response.json | tr -d '"'`
+#TODO fail if no metadata
 metadata_url="$HOST$metadata_url"
 
 attempt=1
@@ -27,13 +54,13 @@ while true; do
   curl \
     -X GET "$metadata_url" \
     -o 02-metadata-response.json \
-    --silent
+    --silent --show-error
   echo 'Repsonse:'
   jq "." 02-metadata-response.json
 
   # Check response readiness
   is_voice_ready=`jq ".data.voice_ready" 02-metadata-response.json`
-  if [ $is_voice_ready == 'true' ]; then
+  if [ "x$is_voice_ready" == "xtrue" ]; then
     echo "Voice response is ready"
     break
   else
