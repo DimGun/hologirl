@@ -1,6 +1,6 @@
 {
   "request": {
-    "url": "/fakeid001/metadata",
+    "url": "/response/fakeid001/metadata",
     "method": "GET"
   },
 
