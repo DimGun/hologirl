@@ -97,12 +97,33 @@ public class VoiceControl : MonoBehaviour {
         GUILayout.EndArea();
     }
 
-    protected IEnumerator SendVoiceRequest(byte[] wavFileData) {
-        //const string uploadUrl = "https://api.ht.studsib.ru/voice-request";
-        const string uploadUrl = "http://localhost:8080/voice-request";
-        //const string uploadUrl = "http://httpbin.org/anything";
+    protected IEnumerator SendVoiceRequest(byte[] wavFileData)
+    {
+        const string host = "http://localhost:8080";
+        //const string host = "https://ht.studsib.ru";
 
-        List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
+        UnityWebRequest voiceRequest = CreateVoiceWebRequest(host + "/voice-request", wavFileData);
+        yield return voiceRequest.SendWebRequest();
+        LogTextWebRequest(voiceRequest);
+
+        UnityWebRequest metadataRequest = UnityWebRequest.Get("http://localhost:8080/response/fakeid001/metadata");
+        yield return metadataRequest.SendWebRequest();
+        LogTextWebRequest(metadataRequest);
+
+        UnityWebRequest voiceAnswerRequest = UnityWebRequest.Get("http://localhost:8080/response/fakeid001/voice");
+        DownloadHandlerAudioClip voiceAnswerDownloadHandler = new DownloadHandlerAudioClip("http://localhost:8080/response/fakeid001/voice", AudioType.WAV);
+        voiceAnswerRequest.downloadHandler = voiceAnswerDownloadHandler;
+        yield return voiceAnswerRequest.SendWebRequest();
+        LogBinaryWebRequest(voiceAnswerRequest);
+        
+        if (!voiceAnswerRequest.isNetworkError && !voiceAnswerRequest.isHttpError) {
+            audioSource.clip = voiceAnswerDownloadHandler.audioClip;
+            audioSource.Play();
+        }
+    }
+
+    protected UnityWebRequest CreateVoiceWebRequest(string url, byte[] wavFileData) {
+         List<IMultipartFormSection> formData = new List<IMultipartFormSection>();
         formData.Add(new MultipartFormFileSection(
             name: "voice",
             data: wavFileData,
@@ -110,23 +131,16 @@ public class VoiceControl : MonoBehaviour {
             contentType: "audio/wav"
         ));
 
-        UnityWebRequest req = VoiceControl.MakeMultipartFormDataWebRequest(uploadUrl, UnityWebRequest.kHttpVerbPOST, formData);
+        UnityWebRequest req = VoiceControl.CreateMultipartFormDataWebRequest(url, UnityWebRequest.kHttpVerbPOST, formData);
         req.chunkedTransfer = false;
         req.useHttpContinue = false;
 
-        yield return req.SendWebRequest();
-
-        if (req.isNetworkError || req.isHttpError) {
-            Debug.Log("Failed to upload (code " + req.responseCode + "): " + req.error);
-        } else {
-            Debug.Log("Upload complete. Received in return (bytes): " + req.downloadedBytes);
-            Debug.Log("Raw data" + req.downloadHandler.text);
-        }
+        return req;
     }
 
     // Constructs a multipart form web request with correct last boundary
     // Inspired by michaelneil's comment at https://answers.unity.com/questions/1354080/unitywebrequestpost-and-multipartform-data-not-for.html
-    protected static UnityWebRequest MakeMultipartFormDataWebRequest(string url, string method, List<IMultipartFormSection> sections) {
+    protected static UnityWebRequest CreateMultipartFormDataWebRequest(string url, string method, List<IMultipartFormSection> sections) {
         byte[] boundary = UnityWebRequest.GenerateBoundary();
         string boundaryStr = System.Text.Encoding.UTF8.GetString(boundary);
         // missed boundary consists of CRLF--{boundary}--
@@ -167,6 +181,31 @@ public class VoiceControl : MonoBehaviour {
         FileStream fileStream = new FileStream(filePath, FileMode.Create);
 	    fileStream.Write(mulitypartRawData, 0, mulitypartRawData.Length);
 	    fileStream.Close();
+    }
+
+    private static void LogTextWebRequest(UnityWebRequest req)
+    {
+        if (req.isNetworkError || req.isHttpError)
+        {
+            Debug.Log("Failed to upload (code " + req.responseCode + "): " + req.error);
+        }
+        else
+        {
+            Debug.Log("Upload complete. Received in return (bytes): " + req.downloadedBytes);
+            Debug.Log("Text " + req.downloadHandler.text);
+        }
+    }
+
+    private static void LogBinaryWebRequest(UnityWebRequest req)
+    {
+        if (req.isNetworkError || req.isHttpError)
+        {
+            Debug.Log("Failed to upload (code " + req.responseCode + "): " + req.error);
+        }
+        else
+        {
+            Debug.Log("Upload complete. Received in return (bytes): " + req.downloadedBytes);
+        }
     }
 
     protected static string GetTimeStampStr() {
