@@ -106,12 +106,13 @@ public class VoiceControl : MonoBehaviour {
         yield return voiceRequest.SendWebRequest();
         LogTextWebRequest(voiceRequest);
 
-        UnityWebRequest metadataRequest = UnityWebRequest.Get("http://localhost:8080/response/fakeid001/metadata");
+        UnityWebRequest metadataRequest = UnityWebRequest.Get("https://ht.studsib.ru/response/oOGpVY/metadata");
         yield return metadataRequest.SendWebRequest();
         LogTextWebRequest(metadataRequest);
 
-        UnityWebRequest voiceAnswerRequest = UnityWebRequest.Get("http://localhost:8080/response/fakeid001/voice");
-        DownloadHandlerAudioClip voiceAnswerDownloadHandler = new DownloadHandlerAudioClip("http://localhost:8080/response/fakeid001/voice", AudioType.WAV);
+        string voiceAnswerUrl = "https://ht.studsib.ru/response/oOGpVY/voice";
+        UnityWebRequest voiceAnswerRequest = UnityWebRequest.Get(voiceAnswerUrl);
+        DownloadHandlerAudioClip voiceAnswerDownloadHandler = new DownloadHandlerAudioClip(voiceAnswerUrl, AudioType.WAV);
         voiceAnswerRequest.downloadHandler = voiceAnswerDownloadHandler;
         yield return voiceAnswerRequest.SendWebRequest();
         LogBinaryWebRequest(voiceAnswerRequest);
