@@ -159,7 +159,8 @@ public class VoiceControl : MonoBehaviour {
     }
 
     // Constructs a multipart form web request with correct last boundary
-    // Inspired by michaelneil's comment at https://answers.unity.com/questions/1354080/unitywebrequestpost-and-multipartform-data-not-for.html
+    // Inspired by michaelneil's comment at
+    // https://answers.unity.com/questions/1354080/unitywebrequestpost-and-multipartform-data-not-for.html
     protected static UnityWebRequest CreateMultipartFormDataWebRequest(string url, string method, List<IMultipartFormSection> sections) {
         byte[] boundary = UnityWebRequest.GenerateBoundary();
         string boundaryStr = System.Text.Encoding.UTF8.GetString(boundary);
