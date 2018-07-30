@@ -107,25 +107,42 @@ public class VoiceControl : MonoBehaviour {
         yield return voiceRequest.SendWebRequest();
         LogTextWebRequest(voiceRequest);
 
-        // Give server some time to process request
-        yield return new WaitForSeconds(1.0f);
+        byte attemptsLeft = 3;
+        bool voiceReady = false;
+        JSONNode data = null;
 
-        UnityWebRequest metadataRequest = UnityWebRequest.Get("https://ht.studsib.ru/response/oOGpVY/metadata");
-        yield return metadataRequest.SendWebRequest();
-        LogTextWebRequest(metadataRequest);
+        // Ask for answer for 3 times
+        while(attemptsLeft > 0 && !voiceReady) {
+            Debug.Log("Getting metadata. Attempts left: " + attemptsLeft);
+            // Give server some time to process request
+            yield return new WaitForSeconds(1.0f);
 
-        // Parse metadata to find if voice answer is ready
-        string jsonResponseStr = metadataRequest.downloadHandler.text;
-        if (jsonResponseStr != null && jsonResponseStr.Length > 0) {
-            JSONNode json = JSON.Parse(jsonResponseStr);
-            if (json != null) {
-                JSONNode data = json["data"];
-                if (data["voice_ready"].AsBool) {
-                    string question = data["question"]? data["question"].Value : "¯\\_(ツ)_/¯";
-                    Debug.Log("@user> " + question);
-                    Debug.Log("@alla> " + data["answer"].Value);
+            // Request for metadata
+            UnityWebRequest metadataRequest = UnityWebRequest.Get("https://ht.studsib.ru/response/oOGpVY/metadata");
+            yield return metadataRequest.SendWebRequest();
+            LogTextWebRequest(metadataRequest);
+
+            // Parse metadata to find if voice answer is ready
+            string jsonResponseStr = metadataRequest.downloadHandler.text;
+            if (jsonResponseStr != null && jsonResponseStr.Length > 0) {
+                JSONNode json = JSON.Parse(jsonResponseStr);
+                if (json != null) {
+                    data = json["data"];
+                    voiceReady = data["voice_ready"].AsBool;
                 }
             }
+            attemptsLeft--;
+        }
+
+        if (data) {
+            string question = data["question"]? data["question"].Value : "¯\\_(ツ)_/¯";
+            Debug.Log("@user> " + question);
+            Debug.Log("@alla> " + data["answer"].Value);
+        }
+
+        if (!voiceReady) {
+            Debug.Log("Server failed to prepare a voice answer.");
+            yield break;
         }
 
         // Download voice answer
@@ -139,6 +156,8 @@ public class VoiceControl : MonoBehaviour {
         if (!voiceAnswerRequest.isNetworkError && !voiceAnswerRequest.isHttpError) {
             audioSource.clip = voiceAnswerDownloadHandler.audioClip;
             audioSource.Play();
+        } else {
+            Debug.Log("Failed to play voice answer");
         }
     }
 
