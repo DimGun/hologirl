@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Networking;
+using SimpleJSON;
 
 public class VoiceControl : MonoBehaviour {
 
@@ -106,10 +107,28 @@ public class VoiceControl : MonoBehaviour {
         yield return voiceRequest.SendWebRequest();
         LogTextWebRequest(voiceRequest);
 
+        // Give server some time to process request
+        yield return new WaitForSeconds(1.0f);
+
         UnityWebRequest metadataRequest = UnityWebRequest.Get("https://ht.studsib.ru/response/oOGpVY/metadata");
         yield return metadataRequest.SendWebRequest();
         LogTextWebRequest(metadataRequest);
 
+        // Parse metadata to find if voice answer is ready
+        string jsonResponseStr = metadataRequest.downloadHandler.text;
+        if (jsonResponseStr != null && jsonResponseStr.Length > 0) {
+            JSONNode json = JSON.Parse(jsonResponseStr);
+            if (json != null) {
+                JSONNode data = json["data"];
+                if (data["voice_ready"].AsBool) {
+                    string question = data["question"]? data["question"].Value : "¯\\_(ツ)_/¯";
+                    Debug.Log("@user> " + question);
+                    Debug.Log("@alla> " + data["answer"].Value);
+                }
+            }
+        }
+
+        // Download voice answer
         string voiceAnswerUrl = "https://ht.studsib.ru/response/oOGpVY/voice";
         UnityWebRequest voiceAnswerRequest = UnityWebRequest.Get(voiceAnswerUrl);
         DownloadHandlerAudioClip voiceAnswerDownloadHandler = new DownloadHandlerAudioClip(voiceAnswerUrl, AudioType.WAV);
