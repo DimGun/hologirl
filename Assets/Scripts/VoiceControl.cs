@@ -206,26 +206,23 @@ public class VoiceControl : MonoBehaviour {
 
     private static void LogTextWebRequest(UnityWebRequest req)
     {
-        if (req.isNetworkError || req.isHttpError)
-        {
-            Debug.Log("Failed to upload (code " + req.responseCode + "): " + req.error);
-        }
-        else
-        {
-            Debug.Log("Upload complete. Received in return (bytes): " + req.downloadedBytes);
-            Debug.Log("Text " + req.downloadHandler.text);
+        if ( req == null ) return;
+        string requestName = req.url;
+        if (req.isNetworkError || req.isHttpError) {
+            Debug.Log(string.Format("Request '{0}' failed. Code: {1}. Error: {2}.", requestName, req.responseCode, req.error));
+        } else {
+            Debug.Log(string.Format("Request '{0}' completed. Response text:{1}", requestName, req.downloadHandler.text));
         }
     }
 
     private static void LogBinaryWebRequest(UnityWebRequest req)
     {
-        if (req.isNetworkError || req.isHttpError)
-        {
-            Debug.Log("Failed to upload (code " + req.responseCode + "): " + req.error);
-        }
-        else
-        {
-            Debug.Log("Upload complete. Received in return (bytes): " + req.downloadedBytes);
+        if ( req == null ) return;
+        string requestName = req.url;
+        if (req.isNetworkError || req.isHttpError) {
+            Debug.Log(string.Format("Request '{0}' failed. Code: {1}. Error: {2}.", requestName, req.responseCode, req.error));
+        } else {
+            Debug.Log(string.Format("Request '{0}' completed. Response size(bytes):{1}", requestName, req.downloadedBytes));
         }
     }
 
