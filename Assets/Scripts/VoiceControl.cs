@@ -11,6 +11,7 @@ public class VoiceControl : MonoBehaviour {
     AudioSource audioSource;
     string micDevice;
     string lastError;
+    bool shouldShowDebugMenu = false;
 
     void Start() {
         audioSource = GetComponent<AudioSource>();
@@ -25,10 +26,17 @@ public class VoiceControl : MonoBehaviour {
         if (lastError != null) {
             GUILayout.Label("Error: " + lastError);
         }
-        if (micDevice != null) {
-            ShowRecordMenu();
-        } else {
+
+        if (micDevice == null) {
             ShowSelectMicMenu();
+        } else if (shouldShowDebugMenu) {
+            ShowDebugRecordMenu();
+        } else {
+            ShowInteractionMenu();
+        }
+
+        if (GUI.Button(new Rect(Screen.width - 100.0f, Screen.height-40.0f, 100.0f, 40.0f), "Debug")) {
+            this.shouldShowDebugMenu = !this.shouldShowDebugMenu;
         }
     }
 
@@ -42,7 +50,23 @@ public class VoiceControl : MonoBehaviour {
         GUILayout.EndArea();
     }
 
-    protected void ShowRecordMenu() {
+    protected void ShowInteractionMenu() {
+        bool isRecording = Microphone.IsRecording(micDevice);
+        bool isPlaying = audioSource.isPlaying;
+
+        if(!isRecording && GUILayout.Button("Ask")) {
+            this.myAudioClip = Microphone.Start(null, false, 10, 44100);
+        }
+
+        if(isRecording && GUILayout.Button("Send")) {
+            Microphone.End(this.micDevice);
+            this.myAudioClip = SavWav.CreateClipByTrimmingSilence(this.myAudioClip, 0.0f);
+            byte[] myAudioClipData = SavWav.EncodeToByteArray(myAudioClip);
+            StartCoroutine(SendVoiceRequest(myAudioClipData));
+        }
+    }
+
+    protected void ShowDebugRecordMenu() {
         GUILayout.BeginArea(new Rect(20, 20, Screen.width - 20, Screen.height - 20));
 
         bool isRecording = Microphone.IsRecording(micDevice);
@@ -100,8 +124,8 @@ public class VoiceControl : MonoBehaviour {
 
     protected IEnumerator SendVoiceRequest(byte[] wavFileData)
     {
-        const string host = "http://localhost:8080";
-        //const string host = "https://ht.studsib.ru";
+        //const string host = "http://localhost:8080";
+        const string host = "https://ht.studsib.ru";
 
         // Send request
         string metadataUri = null;
@@ -180,6 +204,7 @@ public class VoiceControl : MonoBehaviour {
             yield return voiceAnswerRequest.SendWebRequest();
             LogBinaryWebRequest(voiceAnswerRequest);
 
+            //TODO: move out of here. It should just return audio data
             if (!voiceAnswerRequest.isNetworkError && !voiceAnswerRequest.isHttpError) {
                 audioSource.clip = voiceAnswerDownloadHandler.audioClip;
                 audioSource.Play();
